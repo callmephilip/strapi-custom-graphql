@@ -1,5 +1,43 @@
 import fs from "fs";
+import { nonNull } from "nexus";
 import { parse } from "csv-parse/sync";
+
+const politicianStats =
+  (strapi) =>
+  ({ nexus }) => {
+    return {
+      types: [
+        nexus.extendType({
+          type: "Politician",
+          definition(t) {
+            t.list.field("stats", {
+              type: nonNull("PoliticianHonestyStat"),
+              resolve: async (parent) => {
+                const { id } = parent;
+
+                return strapi.db.connection
+                  .raw(`SELECT COUNT(statements.id) as "count", statements.label
+                FROM politicians
+                INNER JOIN statements_politician_links ON statements_politician_links.politician_id = politicians.id
+                INNER JOIN statements ON statements.id = statements_politician_links.statement_id
+                WHERE politicians.id = ${id}
+                GROUP BY statements_politician_links.politician_id, statements.label`);
+              },
+            });
+          },
+        }),
+        nexus.objectType({
+          name: "PoliticianHonestyStat",
+          definition(t) {
+            t.nonNull.field("label", {
+              type: "ENUM_STATEMENT_LABEL",
+            });
+            t.nonNull.int("count");
+          },
+        }),
+      ],
+    };
+  };
 
 export default {
   /**
@@ -8,7 +46,10 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/*{ strapi }*/) {},
+  register({ strapi }) {
+    const extensionService = strapi.plugin("graphql").service("extension");
+    extensionService.use(politicianStats(strapi));
+  },
 
   /**
    * An asynchronous bootstrap function that runs before
