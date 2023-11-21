@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "statements",
+  "info": {
+    "singularName": "statement",
+    "pluralName": "statements",
+    "displayName": "Statement",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "statement": {
+      "type": "text"
+    },
+    "label": {
+      "type": "enumeration",
+      "enum": [
+        "lie",
+        "half-true",
+        "mostly-true",
+        "truth",
+        "barely-true",
+        "pants-fire"
+      ],
+      "required": true
+    },
+    "subject": {
+      "type": "string"
+    },
+    "politician": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::politician.politician"
+    }
+  }
+}

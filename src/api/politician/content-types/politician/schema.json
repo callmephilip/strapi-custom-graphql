@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "politicians",
+  "info": {
+    "singularName": "politician",
+    "pluralName": "politicians",
+    "displayName": "Politician"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
+    "job": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "party": {
+      "type": "string"
+    }
+  }
+}
