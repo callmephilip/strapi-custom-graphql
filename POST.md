@@ -1,7 +1,3 @@
-# XX:
-
-- auto assign visibility rules when populating data
-
 # Table of Contents
 
 - [TLDR;](#tldr)
