@@ -2,13 +2,17 @@
 
 - auto assign visibility rules when populating data
 
-# Contents
+# Tabel of Contents
 
-- TLDR;
-- Prereqs and assumptions
-- Describe a problem using example
-- Suggest a solution with schema
-- Take a look under the hood for how Strapi implements GraphQL
+- [TLDR;](#tldr)
+- [Prereqs and assumptions](#prereqs-and-assumptions)
+- [So what's the problem?](#so-whats-the-problem)
+- [Sidebar: GraphqQL in Strapi: a look under the hood](#graphqql-in-strapi-a-look-under-the-hood)
+- [Customize application GraphQL schema](#customize-application-graphql-schema)
+- [Putting it all together](#putting-it-all-together)
+- [Conclusion](#conclusion)
+
+## TLDR;
 
 ## Prereqs and assumptions
 
@@ -18,7 +22,7 @@
 
 ---
 
-## So what's the problem
+## So what's the problem?
 
 Let's say we are building API for Politician Trust Meter, giving us stats on how trustworthy a given politician is based on his/her previous track record. We got our hands on [LIAR dataset](https://huggingface.co/datasets/liar) hosted on Hugging Face. Here's the dataset summary:
 
@@ -26,27 +30,30 @@ Let's say we are building API for Politician Trust Meter, giving us stats on how
 
 After some cosmetic merging and processing, we load dataset into the database that will look like this.
 
----
-
-## ⚠️ INCLUDE DATABASE SCHEMA DRAWING HERE
-
----
+![Database schema](./.github/images/database-schema.jpg)
 
 We can now run queries to get a specific politician alongside some additional data. We can also find statements associated with a given politician. Front end folks come to us with the following sketch of the interface
 
----
-
-## ⚠️ INCLUDE UI SKETCH OF THE POLITICIAN CARD
-
----
+![Politician card UI sketch](./.github/images/card-ui.jpg)
 
 How can we tweak our current query to include stats for every politician based on their statements? What if we could extend `Politician` object to include dynamically calculated stats without changing the underlying data structure and keep things nice and normalized. Our goal is to produce a graphql schema that would look smth like this:
 
----
+```graphql
+type PoliticianHonestyStat {
+  label: ENUM_STATEMENT_LABEL!
+  count: Int!
+}
 
-## ⚠️ INCLUDE SKETCH OF THE MODIFIED SCHEME
-
----
+type Politician {
+  name: String!
+  job: String
+  state: String
+  party: String
+  createdAt: DateTime
+  updatedAt: DateTime
+  stats: [PoliticianHonestyStat!]
+}
+```
 
 Turns out we can do it in Strapi! But before we jump in, let's look under the hood and see how Strapi handles GraphQL.
 
@@ -384,4 +391,4 @@ Which gives:
 }
 ```
 
-Conclusion
+## Conclusion
