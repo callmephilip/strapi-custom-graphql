@@ -2,7 +2,7 @@
 
 - auto assign visibility rules when populating data
 
-# Tabel of Contents
+# Table of Contents
 
 - [TLDR;](#tldr)
 - [Prereqs and assumptions](#prereqs-and-assumptions)
@@ -14,21 +14,21 @@
 
 ## TLDR;
 
+In this post we will modify the GraphQL schema that Strapi generates to include a new custom type and extend the existing type to include a new field. The whole project is on [Github](https://github.com/callmephilip/strapi-custom-graphql/tree/main); the main extension code is [here](https://github.com/callmephilip/strapi-custom-graphql/blob/main/src/index.ts#L15-L53)
+
 ## Prereqs and assumptions
 
----
-
-## ⚠️ PREREQS and assumptions
-
----
+- you have worked on a Strapi based project before
+- you have used GraphQL APIs and understand terms like `schema`, `resolver`
+- (kind of optional but helpful) you have written SQL queries before and are comfortable with `INNER JOINS` and `aggregations`
 
 ## So what's the problem?
 
-Let's say we are building API for Politician Trust Meter, giving us stats on how trustworthy a given politician is based on his/her previous track record. We got our hands on [LIAR dataset](https://huggingface.co/datasets/liar) hosted on Hugging Face. Here's the dataset summary:
+Let's say we are building an API for Politician Trust Meter, giving us stats on how trustworthy a given politician is based on his/her previous track record. We got our hands on [LIAR dataset](https://huggingface.co/datasets/liar) hosted on Hugging Face. Here's the dataset summary:
 
 > LIAR is a dataset for fake news detection with 12.8K human labeled short statements from politifact.com's API, and each statement is evaluated by a politifact.com editor for its truthfulness. The distribution of labels in the LIAR dataset is relatively well-balanced: except for 1,050 pants-fire cases, the instances for all other labels range from 2,063 to 2,638. In each case, the labeler provides a lengthy analysis report to ground each judgment.
 
-After some cosmetic merging and processing, we load dataset into the database that will look like this.
+After some cosmetic merging and processing, we load the dataset into Strapi. We end up with the following database schema:
 
 ![Database schema](./.github/images/database-schema.jpg)
 
@@ -36,7 +36,7 @@ We can now run queries to get a specific politician alongside some additional da
 
 ![Politician card UI sketch](./.github/images/card-ui.jpg)
 
-How can we tweak our current query to include stats for every politician based on their statements? What if we could extend `Politician` object to include dynamically calculated stats without changing the underlying data structure and keep things nice and normalized. Our goal is to produce a graphql schema that would look smth like this:
+How can we tweak our current schema to include stats for every politician based on their statements? What if we could extend `Politician` object to include dynamically calculated stats without changing the underlying data structure and keep things nice and normalized. Our goal is to produce a graphql schema that would look smth like this:
 
 ```graphql
 type PoliticianHonestyStat {
@@ -61,7 +61,7 @@ Turns out we can do it in Strapi! But before we jump in, let's look under the ho
 
 Once you add `graphql` plugin to your Strapi project, you ✨ automagically ✨ get all your content APIs exposed via `/grapqhl` endpoint - you get types, queries, mutations. Strapi does all the heavy lifting behind the scenes using [GraphQL Nexus](https://nexusjs.org/).
 
-In GraphQL Nexus, you define your GraphQL schema in code using js/ts as opposed to using [GraphQL SDL](https://www.digitalocean.com/community/tutorials/graphql-graphql-sdl). Here's [an example](https://nexusjs.org/docs/getting-started/tutorial/chapter-writing-your-first-schema#model-the-domain)
+In GraphQL Nexus, you define your GraphQL schema in code using `js/ts` as opposed to using [GraphQL SDL](https://www.digitalocean.com/community/tutorials/graphql-graphql-sdl). Here's [an example](https://nexusjs.org/docs/getting-started/tutorial/chapter-writing-your-first-schema#model-the-domain)
 
 ```ts
 import { objectType } from "nexus";
@@ -77,22 +77,22 @@ export const Post = objectType({
 });
 ```
 
-As you can see writing these schemas is a pretty tedious task, so it's great that Strapi takes care of it. However, `graphql` plugin does expose additional APIs allowing us to tap into underlying Nexus machine to customize application GraphQL schema. Let's see how!
+As you can see, writing these schemas is a pretty tedious task, so it's great that Strapi takes care of it. However, `graphql` plugin does expose additional APIs allowing us to tap into the underlying Nexus machine to customize application GraphQL schema. Let's see how!
 
 ## Customize application GraphQL schema
 
-Back to our politician app.
+Let's get back to our app. Here are the tasks we need to go through to roll a new schema:
 
-- define `PoliticianStat` object to include aggregated stats
-- extend `Politician` object to include stats
-- define resolver logic to pull stats for a given politician
+- define `PoliticianHonestyStat` that includes aggregated stats
+- extend `Politician` object to include a list of stats of type `PoliticianHonestyStat`
+- define resolver logic to pull stats for a given politician from the database
 
-But first, how do we get hold Nexus machine inside Strapi? We do so using `extension` service exposed by `graphql` plugin:
+But first, how do we get hold of Nexus inside Strapi? We do so using `extension` service exposed by `graphql` plugin:
 
 ```ts
 const extensionService = strapi.plugin("graphql").service("extension");
 
-extensionService.use(({ nexus, strapi }: { nexus: any; strapi: Strapi }) => {
+extensionService.use(({ nexus, strapi }: { nexus: Nexus; strapi: Strapi }) => {
   return {
     types: [
       // we will return new types
@@ -229,7 +229,7 @@ nexus.extendType({
 }),
 ```
 
-There are at least a couple of ways to handle this. We could use Strapi's entity service API to pull stats for a given politician and then do some maths adding things up, OR we could leverage Strapi's raw database handle and write some sweet sweet SQL to count things for us:
+There are at least a couple of ways to handle this. We could use Strapi's entity service API to pull stats for a given politician and then do some math adding things up, OR we could leverage Strapi's raw database handle and write some sweet sweet SQL to count things for us:
 
 ```ts
 nexus.extendType({
@@ -269,8 +269,10 @@ Let's head to `index.ts` in `/src` and put the whole thing together:
 
 ```ts
 import type { Strapi } from "@strapi/types";
+import type * as Nexus from "nexus";
 import { nonNull } from "nexus";
-// import type * as Nexus from "nexus";
+
+type Nexus = typeof Nexus;
 
 export default {
   /**
@@ -392,3 +394,5 @@ Which gives:
 ```
 
 ## Conclusion
+
+In this post, we presented a use case for extending existing GraphQL schema that you might encounter in your Strapi projects. We discovered how Strapi integrates GraphQL in its stack and how we can work with it to modify data layout to suit our use case. You can find the codebase for the project on [Github](https://github.com/callmephilip/strapi-custom-graphql/tree/main) and take it for a spin locally.
