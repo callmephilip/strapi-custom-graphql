@@ -20,7 +20,7 @@
 
 ## So what's the problem
 
-Let's say we are building API for Politician Trust Meter, giving us stats on how trustworty a given politician is based on his/her previous track record. We got our hands on [LIAR dataset](https://huggingface.co/datasets/liar) hosted on Hugging Face. Here's the dataset summary:
+Let's say we are building API for Politician Trust Meter, giving us stats on how trustworthy a given politician is based on his/her previous track record. We got our hands on [LIAR dataset](https://huggingface.co/datasets/liar) hosted on Hugging Face. Here's the dataset summary:
 
 > LIAR is a dataset for fake news detection with 12.8K human labeled short statements from politifact.com's API, and each statement is evaluated by a politifact.com editor for its truthfulness. The distribution of labels in the LIAR dataset is relatively well-balanced: except for 1,050 pants-fire cases, the instances for all other labels range from 2,063 to 2,638. In each case, the labeler provides a lengthy analysis report to ground each judgment.
 
